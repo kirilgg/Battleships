@@ -32,15 +32,19 @@ const ShipFactory = (function() {
         console.log("Invalid alignment");
       }
     }
-    isHit(x, y) {
+    isThereShip(x, y, attack) {
+      let thereIs = false;
       this.hullBlocks.forEach(block => {
         if (block.x === x && block.y === y) {
-          block.isHit = 1;
-          this.health--;
-        } else {
-          return false;
+          //overloaded
+          if (attack !== undefined) {
+            block.isHit = 1;
+            this.health--;
+          }
+          thereIs = true;
         }
       });
+      return thereIs;
     }
   }
 
@@ -61,7 +65,7 @@ const GameBoardFactory = (function() {
     constructor(sizeX, sizeY) {
       this.sizeX = sizeX;
       this.sizeY = sizeY;
-      //init bord
+      //init board
       this.board = new Array(sizeX)
         .fill(null)
         .map(() => new Array(sizeY).fill(null).map(() => "."));
@@ -70,6 +74,12 @@ const GameBoardFactory = (function() {
       let isXInside = x >= 0 && x < this.sizeX;
       let isYInside = y >= 0 && y < this.sizeY;
       return isXInside && isYInside;
+    }
+    markHit(x, y) {
+      this.board[x][y] = "x";
+    }
+    markMiss(x, y) {
+      this.board[x][y] = "-";
     }
   }
 
@@ -112,6 +122,7 @@ const FleetFactory = (function() {
       } else {
         console.log("Invalid alignment");
       }
+      //Validate ship overlapping
 
       //Set Ship position if valid
       if (isPosValidStart && isPosValidEnd) {
@@ -122,29 +133,28 @@ const FleetFactory = (function() {
       }
     }
     receiveAttack(x, y) {
-      let blockHit = undefined;
+      let shipIsHit = false;
       this.fleet.forEach(ship => {
-        blockHit = ship.hullBlocks.find(
-          block => block.x === x && block.y === y
-        );
-        if (blockHit === undefined) {
-          console.log("miss");
-          //mark miss
-        } else {
-          console.log("hit");
-          blockHit.isHit++;
-          ship.health--;
-          //mark hit
+        if (ship.isThereShip(x, y, "attack")) {
+          shipIsHit = true;
+          return;
         }
       });
+      if (shipIsHit === true) {
+        this.battlefield.markHit(x, y);
+        return true;
+      } else {
+        this.battlefield.markMiss(x, y);
+        return false;
+      }
     }
   }
   let _fleetcommand = new Fleet();
   _fleetcommand.selectShip("Curser");
-  console.log(_fleetcommand.positionShip(4, 3, "horizontal"));
-  console.log(_fleetcommand.selectedShip);
-
-  _fleetcommand.receiveAttack(7, 3);
+  _fleetcommand.positionShip(4, 3, "horizontal");
+  //_fleetcommand.receiveAttack(5, 3);
+  console.log(_fleetcommand.receiveAttack(5, 3));
+  console.log(_fleetcommand.battlefield);
 })();
 
 console.log("///////////////////////////////////////////");
