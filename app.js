@@ -210,14 +210,27 @@ const UI = (function() {
 })();
 
 (function GameController(FleetModel, UI) {
+  function generateRandomShipPosition(player) {
+    let posX = 0;
+    let posY = 0;
+    let alignment = "";
+    player.fleet.forEach(ship => {
+      player.selectShip(ship.name);
+      do {
+        posX = Math.round(Math.random() * player.battlefield.sizeX);
+        posY = Math.round(Math.random() * player.battlefield.sizeX);
+        alignment = Math.round(Math.random() * 1) ? "horizontal" : "vertical";
+      } while (player.positionShip(posX, posY, alignment));
+    });
+  }
+
   const player1 = FleetModel.newFleet();
-  player1.selectShip("Curser");
-  player1.positionShip(2, 3, "vertical");
-  player1.receiveAttack(2, 3);
-  player1.receiveAttack(2, 4);
-  player1.receiveAttack(2, 5);
-  player1.receiveAttack(3, 6);
-  player1.receiveAttack(5, 7);
+  generateRandomShipPosition(player1);
+  for (let i = 0; i < 10; i++) {
+    for (let k = 0; k < 10; k++) {
+      player1.receiveAttack(i, k);
+    }
+  }
 
   UI.renderBattlefield(player1.battlefield);
 
