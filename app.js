@@ -180,12 +180,11 @@ const FleetModel = (function() {
 })();
 
 const UI = (function() {
+  const canvas = document.querySelector(".canvas");
+  const grid = document.createElement("table");
+  let row = {};
+  let col = {};
   function renderBattlefield(battlefield) {
-    const canvas = document.querySelector(".canvas");
-    const grid = document.createElement("table");
-    let row = {};
-    let col = {};
-
     for (let y = 0; y < battlefield.sizeY; y++) {
       row = document.createElement("tr");
       for (let x = 0; x < battlefield.sizeY; x++) {
@@ -202,9 +201,21 @@ const UI = (function() {
       grid.append(row);
     }
     canvas.appendChild(grid);
-    console.log(canvas);
+  }
+  function showFleet(fleet) {
+    let td = {};
+    let tdClass = "";
+    fleet.forEach(ship => {
+      ship.hullBlocks.forEach(block => {
+        td = document.getElementById(`${block.x}-${block.y}`);
+        tdClass = td.getAttribute("class");
+        tdClass += " ship-location";
+        td.setAttribute("class", tdClass);
+      });
+    });
   }
   return {
+    showFleet: showFleet,
     renderBattlefield: renderBattlefield
   };
 })();
@@ -235,6 +246,6 @@ const UI = (function() {
   }
   console.log(player1);
   UI.renderBattlefield(player1.battlefield);
-
+  UI.showFleet(player1.fleet);
   console.log(player1);
 })(FleetModel, UI);
