@@ -105,27 +105,47 @@ const FleetFactory = (function() {
     positionShip(x, y, alignment) {
       let isPosValidStart = false;
       let isPosValidEnd = false;
+      let isNotColliding = true;
 
-      //Validate ship position on game board
+      //POSITION VALIDATION
+      isPosValidStart = this.battlefield.isPosInside(x, y);
       if (alignment === "horizontal") {
-        isPosValidStart = this.battlefield.isPosInside(x, y);
+        //Validate ship position on game board
         isPosValidEnd = this.battlefield.isPosInside(
           x + this.selectedShip.hullBlocks.length,
           y
         );
+        //Validate ship overlapping
+        this.fleet.forEach(ship => {
+          for (let i = 0; i < ship.hullBlocks.length; i++) {
+            if (ship.isThereShip(x + i, y)) {
+              isNotColliding = false;
+              break;
+            }
+          }
+        });
       } else if (alignment === "vertical") {
-        isPosValidStart = this.battlefield.isPosInside(x, y);
+        //Validate ship position on game board
         isPosValidEnd = this.battlefield.isPosInside(
           x,
           y + this.selectedShip.hullBlocks.length
         );
+        //Validate ship overlapping
+        this.fleet.forEach(ship => {
+          for (let i = 0; i < ship.hullBlocks.length; i++) {
+            if (ship.isThereShip(x, y + i)) {
+              isNotColliding = false;
+              break;
+            }
+          }
+        });
       } else {
         console.log("Invalid alignment");
+        return false;
       }
-      //Validate ship overlapping
 
       //Set Ship position if valid
-      if (isPosValidStart && isPosValidEnd) {
+      if (isPosValidStart && isPosValidEnd && isNotColliding) {
         this.selectedShip.setShipLocation(x, y, alignment);
         return true;
       } else {
@@ -152,6 +172,8 @@ const FleetFactory = (function() {
   let _fleetcommand = new Fleet();
   _fleetcommand.selectShip("Curser");
   _fleetcommand.positionShip(4, 3, "horizontal");
+  _fleetcommand.selectShip("Destroyer1");
+  console.log(_fleetcommand.positionShip(4, 4, "vertical"));
   //_fleetcommand.receiveAttack(5, 3);
   console.log(_fleetcommand.receiveAttack(5, 3));
   console.log(_fleetcommand.battlefield);
