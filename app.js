@@ -8,25 +8,28 @@ const ShipFactory = (function() {
       this.name = name;
       this.health = size;
       this.alignment = "";
-      this.hullBlocks = new Array(size).fill({
+      this.hullBlocks = new Array(size).fill(null).map(() => ({
+        // fill(null).map = set each ref to uniq object
         isHit: 0,
         x: 0,
         y: 0
-      });
+      }));
     }
 
     setShipLocation(x, y, alignment) {
       this.alignment = alignment;
-      if (alignment === "vertical") {
+      if (alignment === "horizontal") {
         this.hullBlocks.forEach((block, i) => {
           block.x = x + i;
           block.y = y;
         });
-      } else {
+      } else if ("vertical") {
         this.hullBlocks.forEach((block, i) => {
           block.x = x;
           block.y = y + i;
         });
+      } else {
+        console.log("Invalid alignment");
       }
     }
     isHit(x, y) {
@@ -89,7 +92,8 @@ const FleetFactory = (function() {
     positionShip(x, y, alignment) {
       let isPosValidStart = false;
       let isPosValidEnd = false;
-      //Validate ship position on game bord
+
+      //Validate ship position on game board
       if (alignment === "horizontal") {
         isPosValidStart = this.battlefield.isPosInside(x, y);
         isPosValidEnd = this.battlefield.isPosInside(
@@ -114,11 +118,30 @@ const FleetFactory = (function() {
         return false;
       }
     }
+    receiveAttack(x, y) {
+      let blockHit = undefined;
+      this.fleet.forEach(ship => {
+        blockHit = ship.hullBlocks.find(
+          block => block.x === x && block.y === y
+        );
+        if (blockHit === undefined) {
+          console.log("miss");
+          //mark miss
+        } else {
+          console.log("hit");
+          blockHit.isHit++;
+          ship.health--;
+          //mark hit
+        }
+      });
+    }
   }
   let _fleetcommand = new Fleet();
   _fleetcommand.selectShip("Curser");
+  console.log(_fleetcommand.positionShip(4, 3, "horizontal"));
   console.log(_fleetcommand.selectedShip);
-  console.log(_fleetcommand.positionShip(0, 3, "horizontal"));
+
+  _fleetcommand.receiveAttack(7, 3);
 })();
 
 console.log("///////////////////////////////////////////");
