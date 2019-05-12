@@ -1,8 +1,6 @@
 "use strict";
 
 const ShipFactory = (function() {
-  //privet
-  let _ships = [];
   class Ship {
     constructor(name, size) {
       this.name = name;
@@ -48,14 +46,17 @@ const ShipFactory = (function() {
     }
   }
 
-  _ships.push(new Ship("Curser", 4));
-  _ships.push(new Ship("Destroyer1", 3));
-  _ships.push(new Ship("Destroyer2", 3));
-
+  function createNewShips() {
+    const _ships = [];
+    _ships.push(new Ship("Curser", 4));
+    _ships.push(new Ship("Destroyer1", 3));
+    _ships.push(new Ship("Destroyer2", 3));
+    return _ships;
+  }
   //public
   return {
     getShips() {
-      return _ships;
+      return createNewShips();
     }
   };
 })();
@@ -83,11 +84,9 @@ const GameBoardFactory = (function() {
     }
   }
 
-  let _board = new GameBoard(10, 10);
-
   return {
     newGameBoard(sizeX, sizeY) {
-      return _board;
+      return new GameBoard(10, 10);
     }
   };
 })();
@@ -170,11 +169,9 @@ const FleetModel = (function() {
     }
   }
 
-  let _fleet = new Fleet();
-
   return {
     newFleet(sizeX, sizeY) {
-      return _fleet;
+      return new Fleet();
     }
   };
 })();
@@ -232,20 +229,13 @@ const UI = (function() {
         posY = Math.round(Math.random() * player.battlefield.sizeX);
         alignment = Math.round(Math.random() * 1) ? "horizontal" : "vertical";
       } while (!player.positionShip(posX, posY, alignment));
-      console.log(posX, posY, alignment, ship.name);
     });
   }
+  const player = FleetModel.newFleet();
+  generateRandomShipPosition(player);
 
-  const player1 = FleetModel.newFleet();
-  generateRandomShipPosition(player1);
-  console.log(player1);
-  for (let i = 0; i < 10; i++) {
-    for (let k = 0; k < 10; k++) {
-      player1.receiveAttack(i, k);
-    }
-  }
-  console.log(player1);
-  UI.renderBattlefield(player1.battlefield);
-  UI.showFleet(player1.fleet);
-  console.log(player1);
+  const player2 = FleetModel.newFleet();
+
+  UI.renderBattlefield(player.battlefield);
+  UI.showFleet(player.fleet);
 })(FleetModel, UI);
