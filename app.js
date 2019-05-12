@@ -92,7 +92,7 @@ const GameBoardFactory = (function() {
   };
 })();
 
-const FleetFactory = (function() {
+const FleetModel = (function() {
   class Fleet {
     constructor() {
       this.fleet = ShipFactory.getShips();
@@ -169,19 +169,57 @@ const FleetFactory = (function() {
       }
     }
   }
-  let _fleetcommand = new Fleet();
-  _fleetcommand.selectShip("Curser");
-  _fleetcommand.positionShip(4, 3, "horizontal");
-  _fleetcommand.selectShip("Destroyer1");
-  console.log(_fleetcommand.positionShip(4, 4, "vertical"));
-  //_fleetcommand.receiveAttack(5, 3);
-  console.log(_fleetcommand.receiveAttack(5, 3));
-  console.log(_fleetcommand.battlefield);
+
+  let _fleet = new Fleet();
+
+  return {
+    newFleet(sizeX, sizeY) {
+      return _fleet;
+    }
+  };
 })();
 
-console.log("///////////////////////////////////////////");
-const ships = ShipFactory.getShips();
-console.log(ships);
-const battlefield = GameBoardFactory.newGameBoard();
-console.log(battlefield);
-console.log("///////////////////////////////////////////");
+const UI = (function() {
+  function renderBattlefield(battlefield) {
+    const canvas = document.querySelector(".canvas");
+    const grid = document.createElement("table");
+    let row = {};
+    let col = {};
+
+    for (let y = 0; y < battlefield.sizeY; y++) {
+      row = document.createElement("tr");
+      for (let x = 0; x < battlefield.sizeY; x++) {
+        col = document.createElement("td");
+        col.innerHTML = battlefield.board[x][y];
+        col.setAttribute("id", `${x}-${y}`);
+        if (battlefield.board[x][y] === "-") {
+          col.setAttribute("class", "miss");
+        } else if (battlefield.board[x][y] === "x") {
+          col.setAttribute("class", "hit");
+        }
+        row.append(col);
+      }
+      grid.append(row);
+    }
+    canvas.appendChild(grid);
+    console.log(canvas);
+  }
+  return {
+    renderBattlefield: renderBattlefield
+  };
+})();
+
+(function GameController(FleetModel, UI) {
+  const player1 = FleetModel.newFleet();
+  player1.selectShip("Curser");
+  player1.positionShip(2, 3, "vertical");
+  player1.receiveAttack(2, 3);
+  player1.receiveAttack(2, 4);
+  player1.receiveAttack(2, 5);
+  player1.receiveAttack(3, 6);
+  player1.receiveAttack(5, 7);
+
+  UI.renderBattlefield(player1.battlefield);
+
+  console.log(player1);
+})(FleetModel, UI);
