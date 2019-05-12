@@ -220,18 +220,20 @@ const UI = (function() {
         posX = Math.round(Math.random() * player.battlefield.sizeX);
         posY = Math.round(Math.random() * player.battlefield.sizeX);
         alignment = Math.round(Math.random() * 1) ? "horizontal" : "vertical";
-      } while (player.positionShip(posX, posY, alignment));
+      } while (!player.positionShip(posX, posY, alignment));
+      console.log(posX, posY, alignment, ship.name);
     });
   }
 
   const player1 = FleetModel.newFleet();
   generateRandomShipPosition(player1);
+  console.log(player1);
   for (let i = 0; i < 10; i++) {
     for (let k = 0; k < 10; k++) {
       player1.receiveAttack(i, k);
     }
   }
-
+  console.log(player1);
   UI.renderBattlefield(player1.battlefield);
 
   console.log(player1);
