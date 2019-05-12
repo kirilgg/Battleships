@@ -61,7 +61,10 @@ const GameBoardFactory = (function() {
     constructor(sizeX, sizeY) {
       this.sizeX = sizeX;
       this.sizeY = sizeY;
-      this.board = new Array(sizeX).fill(new Array(sizeY).fill("."));
+      //init bord
+      this.board = new Array(sizeX)
+        .fill(null)
+        .map(() => new Array(sizeY).fill(null).map(() => "."));
     }
     isPosInside(x, y) {
       let isXInside = x >= 0 && x < this.sizeX;
