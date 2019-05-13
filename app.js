@@ -170,7 +170,7 @@ const FleetModel = (function() {
   }
 
   return {
-    newFleet(sizeX, sizeY) {
+    newFleet() {
       return new Fleet();
     }
   };
@@ -217,25 +217,90 @@ const UI = (function() {
   };
 })();
 
-(function GameController(FleetModel, UI) {
-  function generateRandomShipPosition(player) {
-    let posX = 0;
-    let posY = 0;
-    let alignment = "";
-    player.fleet.forEach(ship => {
-      player.selectShip(ship.name);
-      do {
-        posX = Math.round(Math.random() * player.battlefield.sizeX);
-        posY = Math.round(Math.random() * player.battlefield.sizeX);
-        alignment = Math.round(Math.random() * 1) ? "horizontal" : "vertical";
-      } while (!player.positionShip(posX, posY, alignment));
-    });
+const PlayerCtrl = (function() {
+  class Player {
+    constructor(name) {
+      this.name = name;
+      this.command = FleetModel.newFleet();
+      this.attackPosX = 0;
+      this.attackPosY = 0;
+    }
+    getRandomPosX() {
+      return Math.round(Math.random() * (this.command.battlefield.sizeX - 1));
+    }
+    getRandomPosY() {
+      return Math.round(Math.random() * (this.command.battlefield.sizeY - 1));
+    }
+    generateRandomShipPosition() {
+      let posX = 0;
+      let posY = 0;
+      let alignment = "";
+      this.command.fleet.forEach(ship => {
+        this.command.selectShip(ship.name);
+        do {
+          posX = this.getRandomPosX();
+          posY = this.getRandomPosY();
+          alignment = Math.round(Math.random() * 1) ? "horizontal" : "vertical";
+        } while (!this.command.positionShip(posX, posY, alignment));
+      });
+    }
+    play(attack) {
+      attack(this.attackPosX, this.attackPosY);
+    }
   }
-  const player = FleetModel.newFleet();
-  generateRandomShipPosition(player);
+  class AI extends Player {
+    constructor(name) {
+      super(name);
+      this.history = [];
+      this.attackWasHit = false;
+      this.inSequence = false;
+    }
+    generateAttack() {
+      if (this.attackWasHit) {
+        if (this.inSequence) {
+          // continue sequence
+        } else {
+          //search for nearby hits
+        }
+      } else {
+        this.attackPosX = this.getRandomPosX();
+        this.attackPosY = this.getRandomPosX();
+      }
+    }
+    play(attack) {
+      this.attackWasHit = attack(this.attackPosX, this.attackPosY);
+      let attackLog = {
+        posX: this.attackPosX,
+        posY: this.attackPosY,
+        hit: this.attackWasHit
+      };
+      this.history.push(attackLog);
+    }
+  }
+  return {
+    newPlayer(name) {
+      return new Player(name);
+    },
+    newAI(name) {
+      return new AI(name);
+    }
+  };
+})();
 
-  const player2 = FleetModel.newFleet();
+(function GameController(FleetModel, UI, PlayerCtrl) {
+  const fleetHuman = FleetModel.newFleet();
+  const playerHuman = PlayerCtrl.newPlayer("Human");
+  playerHuman.generateRandomShipPosition();
 
-  UI.renderBattlefield(player.battlefield);
-  UI.showFleet(player.fleet);
-})(FleetModel, UI);
+  const fleetPC = FleetModel.newFleet();
+  const playerPC = PlayerCtrl.newAI("PC");
+  playerPC.generateRandomShipPosition();
+  playerPC.generateAttack();
+
+  playerPC.play((x, y) => playerHuman.command.receiveAttack(x, y));
+
+  playerHuman.play((x, y) => playerPC.command.receiveAttack(x, y));
+
+  UI.renderBattlefield(playerHuman.command.battlefield);
+  UI.showFleet(playerPC.command.fleet);
+})(FleetModel, UI, PlayerCtrl);
