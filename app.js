@@ -253,28 +253,58 @@ const PlayerCtrl = (function() {
       super(name);
       this.history = [];
       this.attackWasHit = false;
+      this.lastAttack = {};
       this.inSequence = false;
+    }
+    searchForSequence() {
+      history.forEach(entry => {
+        if (entry.isHit === true && entry !== this.lastAttack) {
+          if (entry.posX) {
+          }
+        }
+      });
+    }
+    isAttackUniq() {
+      let isUniq = true;
+      this.history.forEach(entry => {
+        if (this.attackPosX === entry.posX && this.attackPosY === entry.posY) {
+          isUniq = false;
+        }
+      });
+      return isUniq;
     }
     generateAttack() {
       if (this.attackWasHit) {
         if (this.inSequence) {
           // continue sequence
+
+          do {
+            this.attackPosX = this.getRandomPosX();
+            this.attackPosY = this.getRandomPosX();
+          } while (!this.isAttackUniq());
         } else {
           //search for nearby hits
+
+          do {
+            this.attackPosX = this.getRandomPosX();
+            this.attackPosY = this.getRandomPosX();
+          } while (!this.isAttackUniq());
         }
       } else {
-        this.attackPosX = this.getRandomPosX();
-        this.attackPosY = this.getRandomPosX();
+        do {
+          this.attackPosX = this.getRandomPosX();
+          this.attackPosY = this.getRandomPosX();
+        } while (!this.isAttackUniq());
       }
     }
     play(attack) {
       this.attackWasHit = attack(this.attackPosX, this.attackPosY);
-      let attackLog = {
+      this.lastAttack = {
         posX: this.attackPosX,
         posY: this.attackPosY,
         hit: this.attackWasHit
       };
-      this.history.push(attackLog);
+      this.history.push(this.lastAttack);
     }
   }
   return {
@@ -295,12 +325,16 @@ const PlayerCtrl = (function() {
   const fleetPC = FleetModel.newFleet();
   const playerPC = PlayerCtrl.newAI("PC");
   playerPC.generateRandomShipPosition();
-  playerPC.generateAttack();
 
-  playerPC.play((x, y) => playerHuman.command.receiveAttack(x, y));
+  for (let i = 0; i < 100; i++) {
+    playerPC.generateAttack();
+    playerPC.play((x, y) => playerHuman.command.receiveAttack(x, y));
+    UI.renderBattlefield(playerHuman.command.battlefield);
+  }
 
   playerHuman.play((x, y) => playerPC.command.receiveAttack(x, y));
 
   UI.renderBattlefield(playerHuman.command.battlefield);
-  UI.showFleet(playerPC.command.fleet);
+
+  UI.showFleet(playerHuman.command.fleet);
 })(FleetModel, UI, PlayerCtrl);
