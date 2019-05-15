@@ -178,42 +178,66 @@ const FleetModel = (function() {
 
 const UI = (function() {
   const canvas = document.querySelector(".canvas");
-  const grid = document.createElement("table");
-  let row = {};
-  let col = {};
-  function renderBattlefield(battlefield) {
+
+  function createBattlefield(battlefield, PlayerName) {
+    const grid = document.createElement("table");
+    grid.setAttribute("name", PlayerName);
+    let row = {};
+    let col = {};
     for (let y = 0; y < battlefield.sizeY; y++) {
       row = document.createElement("tr");
       for (let x = 0; x < battlefield.sizeY; x++) {
         col = document.createElement("td");
-        col.innerHTML = battlefield.board[x][y];
-        col.setAttribute("id", `${x}-${y}`);
-        if (battlefield.board[x][y] === "-") {
-          col.setAttribute("class", "miss");
-        } else if (battlefield.board[x][y] === "x") {
-          col.setAttribute("class", "hit");
-        }
+        col.innerHTML = ".";
+        col.setAttribute("name", `${x}-${y}`);
+        col.setAttribute("class", "location");
+
         row.append(col);
       }
       grid.append(row);
     }
     canvas.appendChild(grid);
   }
-  function showFleet(fleet) {
+  function showFleet(fleet, PlayerName) {
+    const grid = canvas.querySelector(`[name="${PlayerName}"]`);
     let td = {};
-    let tdClass = "";
+    let tdClass = {};
     fleet.forEach(ship => {
       ship.hullBlocks.forEach(block => {
-        td = document.getElementById(`${block.x}-${block.y}`);
+        td = grid.querySelector(`[name="${block.x}-${block.y}"]`);
         tdClass = td.getAttribute("class");
-        tdClass += " ship-location";
+        tdClass += " location-ship";
         td.setAttribute("class", tdClass);
       });
     });
   }
+  function updateBattlefield(battlefield, PlayerName) {
+    const grid = canvas.querySelector(`[name="${PlayerName}"]`);
+    let tr = {};
+    let td = {};
+    let tdClass = "";
+    for (let y = 0; y < battlefield.sizeY; y++) {
+      tr = grid.children[y];
+      for (let x = 0; x < battlefield.sizeX; x++) {
+        td = tr.children[x];
+        td.innerHTML = battlefield.board[x][y];
+        if (battlefield.board[x][y] === "-") {
+          tdClass = td.getAttribute("class");
+          tdClass += " miss";
+          td.setAttribute("class", tdClass);
+        }
+        if (battlefield.board[x][y] === "x") {
+          tdClass = td.getAttribute("class");
+          tdClass += " hit";
+          td.setAttribute("class", tdClass);
+        }
+      }
+    }
+  }
   return {
     showFleet: showFleet,
-    renderBattlefield: renderBattlefield
+    createBattlefield: createBattlefield,
+    updateBattlefield: updateBattlefield
   };
 })();
 
@@ -318,23 +342,23 @@ const PlayerCtrl = (function() {
 })();
 
 (function GameController(FleetModel, UI, PlayerCtrl) {
-  const fleetHuman = FleetModel.newFleet();
   const playerHuman = PlayerCtrl.newPlayer("Human");
   playerHuman.generateRandomShipPosition();
 
-  const fleetPC = FleetModel.newFleet();
   const playerPC = PlayerCtrl.newAI("PC");
   playerPC.generateRandomShipPosition();
 
-  for (let i = 0; i < 100; i++) {
+  UI.createBattlefield(playerHuman.command.battlefield, playerHuman.name);
+  UI.createBattlefield(playerPC.command.battlefield, playerPC.name);
+
+  for (let i = 0; i < 50; i++) {
     playerPC.generateAttack();
     playerPC.play((x, y) => playerHuman.command.receiveAttack(x, y));
-    UI.renderBattlefield(playerHuman.command.battlefield);
+    UI.updateBattlefield(playerHuman.command.battlefield, playerHuman.name);
   }
 
   playerHuman.play((x, y) => playerPC.command.receiveAttack(x, y));
 
-  UI.renderBattlefield(playerHuman.command.battlefield);
-
-  UI.showFleet(playerHuman.command.fleet);
+  UI.showFleet(playerHuman.command.fleet, playerHuman.name);
+  UI.updateBattlefield(playerHuman.command.battlefield, playerHuman.name);
 })(FleetModel, UI, PlayerCtrl);

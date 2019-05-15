@@ -1,3 +1,6 @@
+table {
+  margin-bottom: 10px;
+}
 td {
   margin: 5px;
   padding: 10px;
@@ -12,8 +15,8 @@ td {
   background-color: red;
 }
 .miss {
-  background-color: blue;
+  background-color: #00e5ee;
 }
-.ship-location {
-  background-color: orangered;
+.location-ship {
+  background-color: grey;
 }
