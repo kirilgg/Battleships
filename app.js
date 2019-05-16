@@ -245,10 +245,10 @@ const PlayerCtrl = (function() {
   class Player {
     constructor(name) {
       this.name = name;
+      this.roundsPlayed = 0;
       this.command = FleetModel.newFleet();
       this.attackPosX = 0;
       this.attackPosY = 0;
-      UI.createBattlefield(this.command.battlefield, this.name);
     }
     getRandomPosX() {
       return Math.round(Math.random() * (this.command.battlefield.sizeX - 1));
@@ -274,9 +274,13 @@ const PlayerCtrl = (function() {
     constructor(name) {
       super(name);
     }
+    setAttackPosition(x, y) {
+      this.attackPosX = x;
+      this.attackPosY = y;
+    }
     play(attack) {
-      attack(this.attackPosX, this.attackPosY);
-      UI.updateBattlefield(this.command.battlefield, this.name);
+      this.roundsPlayed++;
+      return attack(this.attackPosX, this.attackPosY);
     }
   }
   class AI extends Player {
@@ -329,6 +333,8 @@ const PlayerCtrl = (function() {
       }
     }
     play(attack) {
+      this.roundsPlayed++;
+      this.generateAttack();
       this.attackWasHit = attack(this.attackPosX, this.attackPosY);
       this.lastAttack = {
         posX: this.attackPosX,
@@ -336,7 +342,7 @@ const PlayerCtrl = (function() {
         hit: this.attackWasHit
       };
       this.history.push(this.lastAttack);
-      UI.updateBattlefield(this.command.battlefield, this.name);
+      return this.attackWasHit;
     }
   }
   return {
@@ -355,20 +361,43 @@ const PlayerCtrl = (function() {
 
   playerHuman.generateRandomShipPosition();
   playerPC.generateRandomShipPosition();
+  UI.createBattlefield(playerHuman.command.battlefield, playerHuman.name);
+  UI.createBattlefield(playerPC.command.battlefield, playerPC.name);
 
   UI.showFleet(playerHuman.command.fleet, playerHuman.name);
 
-  let location = "";
+  let scored = false;
+
+  function playRound(x, y) {
+    // Human turn
+    playerHuman.setAttackPosition(x, y);
+    scored = playerHuman.play((x, y) => playerPC.command.receiveAttack(x, y));
+    UI.updateBattlefield(playerPC.command.battlefield, playerPC.name);
+    if (scored) return; // skip PC to play another turn
+
+    // PC turn
+    do {
+      scored = playerPC.play((x, y) => playerHuman.command.receiveAttack(x, y));
+      UI.updateBattlefield(playerHuman.command.battlefield, playerHuman.name);
+    } while (scored);
+  }
+
   const pcPlayerBoard = document.querySelector("[name=" + playerPC.name + "]");
+  let location = "";
+  let x = 0;
+  let y = 0;
   pcPlayerBoard.addEventListener("click", event => {
     if (event.target.classList.contains("location")) {
       location = event.target.getAttribute("name");
-      playerHuman.attackPosX = parseInt(location[0]);
-      playerHuman.attackPosY = parseInt(location[2]);
-
-      playerHuman.play((x, y) => playerPC.command.receiveAttack(x, y));
-      playerPC.generateAttack();
-      playerPC.play((x, y) => playerHuman.command.receiveAttack(x, y));
+      try {
+        x = parseInt(location[0]);
+        y = parseInt(location[2]);
+      } catch (error) {
+        console.log(error);
+        console.log("Please don't break my game!");
+        //restart game ?!
+      }
+      playRound(x, y);
     }
   });
 })(FleetModel, UI, PlayerCtrl);
