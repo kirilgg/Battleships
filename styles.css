@@ -1,22 +1,81 @@
-table {
-  margin-bottom: 10px;
+*,
+*::after,
+*::before {
+  margin: 0;
+  padding: 0;
+  box-sizing: inherit;
 }
-td {
-  margin: 5px;
-  padding: 10px;
-  width: 20px;
-  height: 20px;
-  background-color: aquamarine;
-  text-align: center;
-  font-size: 20px;
+html {
+  font-size: 62.5%;
+}
+.canvas {
+  width: 120rem;
+  height: 60rem;
+  margin: auto;
+  margin-top: 10rem;
+  background: gray;
+  font-size: 2rem;
+  display: flex;
+  flex-flow: row;
+  justify-content: space-between;
+}
+.player {
+  width: 55rem;
+  height: 55rem;
+  margin: auto;
+  background-color: bisque;
+  display: flex;
+  flex-flow: row wrap;
+  -webkit-touch-callout: none; /* iOS Safari */
+  -webkit-user-select: none; /* Safari */
+  -khtml-user-select: none; /* Konqueror HTML */
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* Internet Explorer/Edge */
+  user-select: none;
 }
 
+.grid-info {
+  box-sizing: border-box;
+  border: 1px solid bisque;
+  height: 5rem;
+  width: 5rem;
+  background-color: grey;
+  text-align: center;
+  padding-top: 1.2rem;
+}
+.grid-info-horizontal {
+  display: flex;
+  flex-flow: row nowrap;
+  margin-left: 5rem;
+  width: 50rem;
+  height: 5rem;
+}
+.grid-info-vertical {
+  width: 5rem;
+  height: 50rem;
+  display: flex;
+  flex-flow: column nowrap;
+}
+.grid {
+  width: 50rem;
+  height: 50rem;
+  border-spacing: 0px;
+}
+.grid-location {
+  background-color: aquamarine;
+  width: 5rem;
+  height: 5rem;
+  box-sizing: border-box;
+  border: 1px solid bisque;
+  text-align: center;
+  padding-top: 1.2rem;
+}
 .hit {
   background-color: red;
 }
 .miss {
   background-color: #00e5ee;
 }
-.location-ship {
+.grid-ship {
   background-color: grey;
 }

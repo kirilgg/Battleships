@@ -179,24 +179,63 @@ const FleetModel = (function() {
 const UI = (function() {
   const canvas = document.querySelector(".canvas");
 
-  function createBattlefield(battlefield, PlayerName) {
+  function createBattleGrid(battlefield, PlayerName) {
     const grid = document.createElement("table");
+    grid.setAttribute("class", "grid");
     grid.setAttribute("name", PlayerName);
     let row = {};
     let col = {};
+    let div = {};
     for (let y = 0; y < battlefield.sizeY; y++) {
       row = document.createElement("tr");
-      for (let x = 0; x < battlefield.sizeY; x++) {
+      row.setAttribute("class", "grid-row");
+      for (let x = 0; x < battlefield.sizeX; x++) {
+        div = document.createElement("div");
+        div.innerHTML = ".";
+        div.setAttribute("class", "grid-location");
+        div.setAttribute("name", `${x}-${y}`);
         col = document.createElement("td");
-        col.innerHTML = ".";
-        col.setAttribute("name", `${x}-${y}`);
-        col.setAttribute("class", "location");
-
+        col.setAttribute("class", "grid-col");
+        col.append(div);
         row.append(col);
       }
       grid.append(row);
     }
-    canvas.appendChild(grid);
+    return grid;
+  }
+  function createVerticalInfo(sizeY) {
+    let col = document.createElement("div");
+    col.setAttribute("class", "grid-info-vertical");
+    let info = {};
+    for (let y = 0; y < sizeY; y++) {
+      info = document.createElement("div");
+      info.innerHTML = `${String.fromCharCode(65 + y)}`;
+      info.setAttribute("class", "grid-info");
+      col.append(info);
+    }
+    return col;
+  }
+  function createHorizontalInfo(sizeX) {
+    let col = document.createElement("div");
+    col.setAttribute("class", "grid-info-horizontal");
+    let info = {};
+    for (let x = 1; x < sizeX + 1; x++) {
+      info = document.createElement("div");
+      info.innerHTML = `${x}`;
+      info.setAttribute("class", "grid-info");
+      col.append(info);
+    }
+    return col;
+  }
+
+  function createBattlefield(battlefield, PlayerName) {
+    const ui = document.createElement("div");
+    ui.setAttribute("class", "player");
+    ui.appendChild(createHorizontalInfo(battlefield.sizeX));
+
+    ui.appendChild(createVerticalInfo(battlefield.sizeY));
+    ui.appendChild(createBattleGrid(battlefield, PlayerName));
+    canvas.appendChild(ui);
   }
   function showFleet(fleet, PlayerName) {
     const grid = canvas.querySelector(`[name="${PlayerName}"]`);
@@ -206,7 +245,7 @@ const UI = (function() {
       ship.hullBlocks.forEach(block => {
         td = grid.querySelector(`[name="${block.x}-${block.y}"]`);
         tdClass = td.getAttribute("class");
-        tdClass += " location-ship";
+        tdClass += " grid-ship";
         td.setAttribute("class", tdClass);
       });
     });
@@ -220,16 +259,22 @@ const UI = (function() {
       tr = grid.children[y];
       for (let x = 0; x < battlefield.sizeX; x++) {
         td = tr.children[x];
-        td.innerHTML = battlefield.board[x][y];
-        if (battlefield.board[x][y] === "-") {
-          tdClass = td.getAttribute("class");
+        td.firstChild.innerHTML = battlefield.board[x][y];
+        if (
+          battlefield.board[x][y] === "-" &&
+          !td.firstChild.classList.contains("miss")
+        ) {
+          tdClass = td.firstChild.getAttribute("class");
           tdClass += " miss";
-          td.setAttribute("class", tdClass);
+          td.firstChild.setAttribute("class", tdClass);
         }
-        if (battlefield.board[x][y] === "x") {
-          tdClass = td.getAttribute("class");
+        if (
+          battlefield.board[x][y] === "x" &&
+          !td.firstChild.classList.contains("hit")
+        ) {
+          tdClass = td.firstChild.getAttribute("class");
           tdClass += " hit";
-          td.setAttribute("class", tdClass);
+          td.firstChild.setAttribute("class", tdClass);
         }
       }
     }
@@ -387,7 +432,7 @@ const PlayerCtrl = (function() {
   let x = 0;
   let y = 0;
   pcPlayerBoard.addEventListener("click", event => {
-    if (event.target.classList.contains("location")) {
+    if (event.target.classList.contains("grid-location")) {
       location = event.target.getAttribute("name");
       try {
         x = parseInt(location[0]);
