@@ -279,6 +279,7 @@ const UI = (function() {
       }
     }
   }
+
   return {
     showFleet: showFleet,
     createBattlefield: createBattlefield,
@@ -294,6 +295,7 @@ const PlayerCtrl = (function() {
       this.command = FleetModel.newFleet();
       this.attackPosX = 0;
       this.attackPosY = 0;
+      this.history = [];
     }
     getRandomPosX() {
       return Math.round(Math.random() * (this.command.battlefield.sizeX - 1));
@@ -314,6 +316,26 @@ const PlayerCtrl = (function() {
         } while (!this.command.positionShip(posX, posY, alignment));
       });
     }
+    isAttackUniq() {
+      let isUniq = true;
+      this.history.forEach(entry => {
+        if (this.attackPosX === entry.posX && this.attackPosY === entry.posY) {
+          isUniq = false;
+        }
+      });
+      return isUniq;
+    }
+    play(attack) {
+      this.roundsPlayed++;
+      this.attackWasHit = attack(this.attackPosX, this.attackPosY);
+      this.lastAttack = {
+        posX: this.attackPosX,
+        posY: this.attackPosY,
+        hit: this.attackWasHit
+      };
+      this.history.push(this.lastAttack);
+      return this.attackWasHit;
+    }
   }
   class Human extends Player {
     constructor(name) {
@@ -323,15 +345,10 @@ const PlayerCtrl = (function() {
       this.attackPosX = x;
       this.attackPosY = y;
     }
-    play(attack) {
-      this.roundsPlayed++;
-      return attack(this.attackPosX, this.attackPosY);
-    }
   }
   class AI extends Player {
     constructor(name) {
       super(name);
-      this.history = [];
       this.attackWasHit = false;
       this.lastAttack = {};
       this.inSequence = false;
@@ -344,15 +361,7 @@ const PlayerCtrl = (function() {
         }
       });
     }
-    isAttackUniq() {
-      let isUniq = true;
-      this.history.forEach(entry => {
-        if (this.attackPosX === entry.posX && this.attackPosY === entry.posY) {
-          isUniq = false;
-        }
-      });
-      return isUniq;
-    }
+
     generateAttack() {
       if (this.attackWasHit) {
         if (this.inSequence) {
@@ -376,18 +385,6 @@ const PlayerCtrl = (function() {
           this.attackPosY = this.getRandomPosX();
         } while (!this.isAttackUniq());
       }
-    }
-    play(attack) {
-      this.roundsPlayed++;
-      this.generateAttack();
-      this.attackWasHit = attack(this.attackPosX, this.attackPosY);
-      this.lastAttack = {
-        posX: this.attackPosX,
-        posY: this.attackPosY,
-        hit: this.attackWasHit
-      };
-      this.history.push(this.lastAttack);
-      return this.attackWasHit;
     }
   }
   return {
@@ -416,12 +413,13 @@ const PlayerCtrl = (function() {
   function playRound(x, y) {
     // Human turn
     playerHuman.setAttackPosition(x, y);
+    if (!playerHuman.isAttackUniq()) return;
     scored = playerHuman.play((x, y) => playerPC.command.receiveAttack(x, y));
     UI.updateBattlefield(playerPC.command.battlefield, playerPC.name);
     if (scored) return; // skip PC to play another turn
-
     // PC turn
     do {
+      playerPC.generateAttack();
       scored = playerPC.play((x, y) => playerHuman.command.receiveAttack(x, y));
       UI.updateBattlefield(playerHuman.command.battlefield, playerHuman.name);
     } while (scored);
