@@ -70,12 +70,13 @@ html {
   text-align: center;
   padding-top: 1.2rem;
 }
-.hit {
-  background-color: red;
-}
+
 .miss {
   background-color: #00e5ee;
 }
 .grid-ship {
   background-color: grey;
+}
+.hit {
+  background-color: red;
 }
