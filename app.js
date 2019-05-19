@@ -176,7 +176,9 @@ const FleetModel = (function() {
 
 const UI = (function() {
   const canvas = document.querySelector(".canvas");
-
+  function clearCanvas() {
+    canvas.innerHTML = "";
+  }
   function createBattleGrid(battlefield, playerName) {
     const grid = document.createElement("table");
     grid.setAttribute("class", "grid");
@@ -313,7 +315,8 @@ const UI = (function() {
     createBattlefield: createBattlefield,
     updateBattlefield: updateBattlefield,
     renderDestroyedShip: renderDestroyedShip,
-    renderGameEnd: renderGameEnd
+    renderGameEnd: renderGameEnd,
+    clearCanvas: clearCanvas
   };
 })();
 
@@ -505,21 +508,50 @@ const PlayerCtrl = (function() {
 })();
 
 (function GameController(FleetModel, UI, PlayerCtrl) {
-  const playerHuman = PlayerCtrl.newPlayerHuman("You");
-  const playerPC = PlayerCtrl.newPlayerAI("PC");
-
-  playerHuman.generateRandomShipPosition();
-  playerPC.generateRandomShipPosition();
-  UI.createBattlefield(playerHuman.command.battlefield, playerHuman.name);
-  UI.createBattlefield(playerPC.command.battlefield, playerPC.name);
-
-  UI.showFleet(playerHuman.command.fleet, playerHuman.name);
-  //UI.showFleet(playerPC.command.fleet, playerPC.name);
-
+  let playerHuman = {};
+  let playerPC = {};
   let scored = false;
-  let shipsLeft;
-  let gameStage = "playing";
+  let gameIsRunning = true;
+  let shipsLeft = 0;
+  let locationName = "";
+  let location = {};
+  let x = 0;
+  let y = 0;
+  newGame();
+  const canvas = document.querySelector(".canvas");
+  canvas.addEventListener("click", event => {
+    if (event.target.classList.contains("grid-location") && gameIsRunning) {
+      location = event.target.parentElement.parentElement.parentElement;
+      locationName = location.getAttribute("name");
+      if (locationName == "PC") {
+        try {
+          locationName = event.target.getAttribute("name");
+          x = parseInt(locationName[0]);
+          y = parseInt(locationName[2]);
+        } catch (error) {
+          console.log(error);
+          console.log("Please don't break my game!");
+          //restart game ?!
+        }
+      }
+      playRound(x, y);
+    } else if (event.target.classList.contains("game-end__button")) {
+      newGame();
+      gameIsRunning = true;
+    }
+  });
+  function newGame() {
+    playerHuman = PlayerCtrl.newPlayerHuman("You");
+    playerPC = PlayerCtrl.newPlayerAI("PC");
+    playerHuman.generateRandomShipPosition();
+    playerPC.generateRandomShipPosition();
+    UI.clearCanvas();
+    UI.createBattlefield(playerHuman.command.battlefield, playerHuman.name);
+    UI.createBattlefield(playerPC.command.battlefield, playerPC.name);
 
+    UI.showFleet(playerPC.command.fleet, playerPC.name);
+    UI.showFleet(playerHuman.command.fleet, playerHuman.name);
+  }
   function checkIfShipIsDestroyed(player) {
     shipsLeft = player.command.fleet.length;
     player.command.fleet.forEach(ship => {
@@ -532,6 +564,7 @@ const PlayerCtrl = (function() {
   function isEndGame(player) {
     if (shipsLeft === 0) {
       UI.renderGameEnd(player.name, player.roundsPlayed);
+      gameIsRunning = false;
       return true;
     }
     return false;
@@ -554,23 +587,4 @@ const PlayerCtrl = (function() {
       if (isEndGame(playerPC)) return;
     } while (scored);
   }
-
-  const pcPlayerBoard = document.querySelector("[name=" + playerPC.name + "]");
-  let location = "";
-  let x = 0;
-  let y = 0;
-  pcPlayerBoard.addEventListener("click", event => {
-    if (event.target.classList.contains("grid-location")) {
-      location = event.target.getAttribute("name");
-      try {
-        x = parseInt(location[0]);
-        y = parseInt(location[2]);
-      } catch (error) {
-        console.log(error);
-        console.log("Please don't break my game!");
-        //restart game ?!
-      }
-      playRound(x, y);
-    }
-  });
 })(FleetModel, UI, PlayerCtrl);
