@@ -167,7 +167,6 @@ const FleetModel = (function() {
       }
     }
   }
-
   return {
     newFleet() {
       return new Fleet();
@@ -291,11 +290,30 @@ const UI = (function() {
       }
     });
   }
+  function renderGameEnd(playerName, turns) {
+    const display = document.createElement("div");
+    const head = document.createElement("h2");
+    const msg = document.createElement("p");
+    const btn = document.createElement("button");
+    display.setAttribute("class", "game-end");
+    head.setAttribute("class", "game-end__winner");
+    msg.setAttribute("class", "game-end__msg");
+    btn.setAttribute("class", "game-end__button");
+    head.innerHTML = `${playerName} Won!`;
+    msg.innerHTML = `${playerName} have played ${turns} turns`;
+    btn.innerHTML = "Start new game";
+    display.append(head);
+    display.append(msg);
+    display.append(btn);
+    canvas.append(display);
+  }
+
   return {
     showFleet: showFleet,
     createBattlefield: createBattlefield,
     updateBattlefield: updateBattlefield,
-    renderDestroyedShip: renderDestroyedShip
+    renderDestroyedShip: renderDestroyedShip,
+    renderGameEnd: renderGameEnd
   };
 })();
 
@@ -487,7 +505,7 @@ const PlayerCtrl = (function() {
 })();
 
 (function GameController(FleetModel, UI, PlayerCtrl) {
-  const playerHuman = PlayerCtrl.newPlayerHuman("Human");
+  const playerHuman = PlayerCtrl.newPlayerHuman("You");
   const playerPC = PlayerCtrl.newPlayerAI("PC");
 
   playerHuman.generateRandomShipPosition();
@@ -496,15 +514,27 @@ const PlayerCtrl = (function() {
   UI.createBattlefield(playerPC.command.battlefield, playerPC.name);
 
   UI.showFleet(playerHuman.command.fleet, playerHuman.name);
+  //UI.showFleet(playerPC.command.fleet, playerPC.name);
 
   let scored = false;
+  let shipsLeft;
+  let gameStage = "playing";
 
   function checkIfShipIsDestroyed(player) {
+    shipsLeft = player.command.fleet.length;
     player.command.fleet.forEach(ship => {
       if (ship.health === 0) {
+        shipsLeft--;
         UI.renderDestroyedShip(ship, player.name);
       }
     });
+  }
+  function isEndGame(player) {
+    if (shipsLeft === 0) {
+      UI.renderGameEnd(player.name, player.roundsPlayed);
+      return true;
+    }
+    return false;
   }
   function playRound(x, y) {
     //Human turn
@@ -512,14 +542,16 @@ const PlayerCtrl = (function() {
     if (!playerHuman.isAttackUniq()) return;
     scored = playerHuman.play((x, y) => playerPC.command.receiveAttack(x, y));
     UI.updateBattlefield(playerPC.command.battlefield, playerPC.name);
-    checkIfShipIsDestroyed(playerHuman);
-
+    checkIfShipIsDestroyed(playerPC);
+    if (isEndGame(playerHuman)) return;
     if (scored) return; // skip PC to play another turn
+
     //PC turn
     do {
       scored = playerPC.play((x, y) => playerHuman.command.receiveAttack(x, y));
       UI.updateBattlefield(playerHuman.command.battlefield, playerHuman.name);
-      checkIfShipIsDestroyed(playerPC);
+      checkIfShipIsDestroyed(playerHuman);
+      if (isEndGame(playerPC)) return;
     } while (scored);
   }
 

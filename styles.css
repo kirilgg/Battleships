@@ -9,6 +9,7 @@ html {
   font-size: 62.5%;
 }
 .canvas {
+  position: relative;
   width: 120rem;
   height: 60rem;
   margin: auto;
@@ -23,7 +24,7 @@ html {
   width: 55rem;
   height: 55rem;
   margin: auto;
-  background-color: bisque;
+  background-color: antiquewhite;
   display: flex;
   flex-flow: row wrap;
   -webkit-touch-callout: none; /* iOS Safari */
@@ -36,7 +37,7 @@ html {
 
 .grid-info {
   box-sizing: border-box;
-  border: 1px solid bisque;
+  border: 1px solid antiquewhite;
   height: 5rem;
   width: 5rem;
   background-color: grey;
@@ -66,11 +67,31 @@ html {
   width: 5rem;
   height: 5rem;
   box-sizing: border-box;
-  border: 1px solid bisque;
+  border: 1px solid antiquewhite;
   text-align: center;
   padding-top: 1.2rem;
 }
-
+.game-end {
+  position: absolute;
+  background-color: rgba(0, 255, 255, 0.767);
+  width: 50%;
+  height: 50%;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  margin: auto;
+  font-size: 3rem;
+  text-align: center;
+}
+.game-end__winner {
+  margin-top: 15%;
+  background-color: antiquewhite;
+}
+.game-end__button {
+  margin-top: 5%;
+  font-size: 2rem;
+}
 .miss {
   background-color: #00e5ee;
 }
