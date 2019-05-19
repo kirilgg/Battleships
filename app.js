@@ -48,9 +48,9 @@ const ShipFactory = (function() {
 
   function createNewShips() {
     const _ships = [];
-    _ships.push(new Ship("Curser", 4));
-    _ships.push(new Ship("Destroyer1", 3));
-    _ships.push(new Ship("Destroyer2", 3));
+    _ships.push(new Ship("Curser", 5));
+    _ships.push(new Ship("Destroyer1", 4));
+    _ships.push(new Ship("Destroyer2", 4));
     return _ships;
   }
   //public
@@ -139,7 +139,6 @@ const FleetModel = (function() {
           }
         });
       } else {
-        console.log("Invalid alignment");
         return false;
       }
 
@@ -336,11 +335,6 @@ const PlayerCtrl = (function() {
       this.history.push(this.lastAttack);
       return this.attackWasHit;
     }
-  }
-  class Human extends Player {
-    constructor(name) {
-      super(name);
-    }
     setAttackPosition(x, y) {
       this.attackPosX = x;
       this.attackPosY = y;
@@ -350,46 +344,128 @@ const PlayerCtrl = (function() {
     constructor(name) {
       super(name);
       this.attackWasHit = false;
-      this.lastAttack = {};
+      this.hits = [];
+      this.attacks = [];
       this.inSequence = false;
+      this.maxShipSize = 0;
+      this.setMaxShipSize();
     }
-    searchForSequence() {
-      history.forEach(entry => {
-        if (entry.isHit === true && entry !== this.lastAttack) {
-          if (entry.posX) {
-          }
+    setMaxShipSize() {
+      this.command.fleet.forEach(ship => {
+        if (ship.hullBlocks.length >= this.maxShipSize) {
+          this.maxShipSize = ship.hullBlocks.length;
         }
       });
     }
-
-    generateAttack() {
-      if (this.attackWasHit) {
-        if (this.inSequence) {
-          // continue sequence
-
-          do {
-            this.attackPosX = this.getRandomPosX();
-            this.attackPosY = this.getRandomPosX();
-          } while (!this.isAttackUniq());
-        } else {
-          //search for nearby hits
-
-          do {
-            this.attackPosX = this.getRandomPosX();
-            this.attackPosY = this.getRandomPosX();
-          } while (!this.isAttackUniq());
+    checkAndSetLocation(x, y) {
+      this.attackPosX = x;
+      this.attackPosY = y;
+      if (this.isAttackUniq()) {
+        // check if Uniq for the attacks stack
+        let isUniq = true;
+        this.attacks.forEach(entry => {
+          if (x === entry.x && y === entry.y) {
+            isUniq = false;
+          }
+        });
+        if (isUniq) {
+          this.attacks.push({ x: x, y: y });
+          return true;
         }
       } else {
-        do {
-          this.attackPosX = this.getRandomPosX();
-          this.attackPosY = this.getRandomPosX();
-        } while (!this.isAttackUniq());
+        return false;
       }
+    }
+    tryUp(x, y) {
+      if (y - 1 >= 0) {
+        return this.checkAndSetLocation(x, y - 1);
+      }
+    }
+    tryDown(x, y) {
+      if (y + 1 < this.command.battlefield.sizeY) {
+        return this.checkAndSetLocation(x, y + 1);
+      }
+    }
+    tryLeft(x, y) {
+      if (x - 1 >= 0) {
+        return this.checkAndSetLocation(x - 1, y);
+      }
+    }
+    tryRight(x, y) {
+      if (x + 1 < this.command.battlefield.sizeX) {
+        return this.checkAndSetLocation(x + 1, y);
+      }
+    }
+    generateSmartAttacks() {
+      let x = this.hits[this.hits.length - 1].posX;
+      let y = this.hits[this.hits.length - 1].posY;
+      if (this.hits.length === 1) {
+        this.tryUp(x, y);
+        this.tryDown(x, y);
+        this.tryLeft(x, y);
+        this.tryRight(x, y);
+      } else {
+        this.attacks.forEach(() => this.attacks.pop());
+        this.attacks.pop();
+        //Try most left & most right / most up & most down
+        for (let i = 0; i < this.hits.length; i++) {
+          for (let k = i + 1; k < this.hits.length; k++) {
+            if (this.hits[i].posX === this.hits[k].posX) {
+              this.tryUp(this.hits[i].posX, this.hits[i].posY);
+              this.tryDown(this.hits[i].posX, this.hits[i].posY);
+              this.tryUp(this.hits[k].posX, this.hits[k].posY);
+              this.tryDown(this.hits[k].posX, this.hits[k].posY);
+            }
+            if (this.hits[i].posY === this.hits[k].posY) {
+              this.tryLeft(this.hits[i].posX, this.hits[i].posY);
+              this.tryRight(this.hits[i].posX, this.hits[i].posY);
+              this.tryLeft(this.hits[k].posX, this.hits[k].posY);
+              this.tryRight(this.hits[k].posX, this.hits[k].posY);
+            }
+          }
+        }
+      }
+      if (this.attacks.length === 0) {
+        this.generateRandomAttack();
+        this.hits.forEach(() => this.hits.pop());
+        this.hits.pop();
+      }
+    }
+    generateRandomAttack() {
+      do {
+        this.attackPosX = this.getRandomPosX();
+        this.attackPosY = this.getRandomPosY();
+      } while (!this.isAttackUniq());
+      let x = this.attackPosX;
+      let y = this.attackPosY;
+      this.attacks.push({ x, y });
+    }
+    play(attack) {
+      if (this.attackWasHit) {
+        this.hits.push(this.history[this.history.length - 1]);
+      }
+      if (this.hits.length === 0) {
+        this.generateRandomAttack();
+      } else {
+        if (this.attacks.length === 0 || this.attackWasHit) {
+          this.generateSmartAttacks();
+        }
+      }
+      try {
+        let positions = this.attacks.pop();
+        this.attackPosX = positions.x;
+        this.attackPosY = positions.y;
+      } catch (error) {
+        console.log(error);
+        this.generateRandomAttack();
+      }
+
+      return super.play(attack);
     }
   }
   return {
     newPlayerHuman(name) {
-      return new Human(name);
+      return new Player(name);
     },
     newPlayerAI(name) {
       return new AI(name);
@@ -411,15 +487,14 @@ const PlayerCtrl = (function() {
   let scored = false;
 
   function playRound(x, y) {
-    // Human turn
+    //Human turn
     playerHuman.setAttackPosition(x, y);
     if (!playerHuman.isAttackUniq()) return;
     scored = playerHuman.play((x, y) => playerPC.command.receiveAttack(x, y));
     UI.updateBattlefield(playerPC.command.battlefield, playerPC.name);
     if (scored) return; // skip PC to play another turn
-    // PC turn
+    //PC turn
     do {
-      playerPC.generateAttack();
       scored = playerPC.play((x, y) => playerHuman.command.receiveAttack(x, y));
       UI.updateBattlefield(playerHuman.command.battlefield, playerHuman.name);
     } while (scored);
