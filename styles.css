@@ -18,12 +18,14 @@ html {
   font-size: 2rem;
   display: flex;
   flex-flow: row;
+  flex-wrap: wrap;
   justify-content: space-between;
 }
 .player {
   width: 55rem;
   height: 55rem;
-  margin: auto;
+  margin-left: auto;
+  margin-right: auto;
   background-color: antiquewhite;
   display: flex;
   flex-flow: row wrap;
@@ -71,6 +73,20 @@ html {
   text-align: center;
   padding-top: 1.2rem;
 }
+.player-input {
+  width: 100%;
+  margin-left: 2.5rem;
+  margin-top: 1rem;
+}
+.player-input__btn {
+  height: 2rem;
+  width: 6rem;
+}
+.player-input__field {
+  height: 2rem;
+  width: 10rem;
+}
+
 .game-end {
   position: absolute;
   background-color: rgba(0, 255, 255, 0.767);

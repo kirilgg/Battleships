@@ -309,14 +309,28 @@ const UI = (function() {
     display.append(btn);
     canvas.append(display);
   }
-
+  function createPlayerInput() {
+    const display = document.createElement("div");
+    const btn = document.createElement("button");
+    const input = document.createElement("input");
+    display.setAttribute("class", "player-input");
+    btn.setAttribute("class", "player-input__btn");
+    input.setAttribute("type", "text");
+    input.setAttribute("placeholder", "Fire at position:");
+    input.setAttribute("class", "player-input__field");
+    btn.innerHTML = "Fire";
+    display.append(btn);
+    display.append(input);
+    canvas.append(display);
+  }
   return {
     showFleet: showFleet,
     createBattlefield: createBattlefield,
     updateBattlefield: updateBattlefield,
     renderDestroyedShip: renderDestroyedShip,
     renderGameEnd: renderGameEnd,
-    clearCanvas: clearCanvas
+    clearCanvas: clearCanvas,
+    createPlayerInput: createPlayerInput
   };
 })();
 
@@ -517,6 +531,8 @@ const PlayerCtrl = (function() {
   let location = {};
   let x = 0;
   let y = 0;
+  let regex = RegExp("^[A-J]([1-9]|10)$");
+  let textInput = "";
   newGame();
   const canvas = document.querySelector(".canvas");
   canvas.addEventListener("click", event => {
@@ -528,16 +544,27 @@ const PlayerCtrl = (function() {
           locationName = event.target.getAttribute("name");
           x = parseInt(locationName[0]);
           y = parseInt(locationName[2]);
+          playRound(x, y);
         } catch (error) {
           console.log(error);
           console.log("Please don't break my game!");
           //restart game ?!
         }
       }
-      playRound(x, y);
     } else if (event.target.classList.contains("game-end__button")) {
       newGame();
       gameIsRunning = true;
+    } else if (event.target.classList.contains("player-input__btn")) {
+      textInput = event.target.nextSibling.value;
+      if (event.target.nextSibling.value === "show") {
+        UI.showFleet(playerPC.command.fleet, playerPC.name);
+      } else {
+        if (regex.test(textInput)) {
+          y = textInput.charCodeAt(0) - 65;
+          x = textInput.replace(/[A-J]/, "0");
+          playRound(Number(x) - 1, y);
+        }
+      }
     }
   });
   function newGame() {
@@ -546,10 +573,9 @@ const PlayerCtrl = (function() {
     playerHuman.generateRandomShipPosition();
     playerPC.generateRandomShipPosition();
     UI.clearCanvas();
+    UI.createPlayerInput();
     UI.createBattlefield(playerHuman.command.battlefield, playerHuman.name);
     UI.createBattlefield(playerPC.command.battlefield, playerPC.name);
-
-    UI.showFleet(playerPC.command.fleet, playerPC.name);
     UI.showFleet(playerHuman.command.fleet, playerHuman.name);
   }
   function checkIfShipIsDestroyed(player) {
