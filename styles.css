@@ -80,3 +80,7 @@ html {
 .hit {
   background-color: red;
 }
+.destroyed {
+  background-color: black;
+  color: red;
+}

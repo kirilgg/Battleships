@@ -178,10 +178,10 @@ const FleetModel = (function() {
 const UI = (function() {
   const canvas = document.querySelector(".canvas");
 
-  function createBattleGrid(battlefield, PlayerName) {
+  function createBattleGrid(battlefield, playerName) {
     const grid = document.createElement("table");
     grid.setAttribute("class", "grid");
-    grid.setAttribute("name", PlayerName);
+    grid.setAttribute("name", playerName);
     let row = {};
     let col = {};
     let div = {};
@@ -227,17 +227,17 @@ const UI = (function() {
     return col;
   }
 
-  function createBattlefield(battlefield, PlayerName) {
+  function createBattlefield(battlefield, playerName) {
     const ui = document.createElement("div");
     ui.setAttribute("class", "player");
     ui.appendChild(createHorizontalInfo(battlefield.sizeX));
 
     ui.appendChild(createVerticalInfo(battlefield.sizeY));
-    ui.appendChild(createBattleGrid(battlefield, PlayerName));
+    ui.appendChild(createBattleGrid(battlefield, playerName));
     canvas.appendChild(ui);
   }
-  function showFleet(fleet, PlayerName) {
-    const grid = canvas.querySelector(`[name="${PlayerName}"]`);
+  function showFleet(fleet, playerName) {
+    const grid = canvas.querySelector(`[name="${playerName}"]`);
     let td = {};
     let tdClass = {};
     fleet.forEach(ship => {
@@ -249,8 +249,8 @@ const UI = (function() {
       });
     });
   }
-  function updateBattlefield(battlefield, PlayerName) {
-    const grid = canvas.querySelector(`[name="${PlayerName}"]`);
+  function updateBattlefield(battlefield, playerName) {
+    const grid = canvas.querySelector(`[name="${playerName}"]`);
     let tr = {};
     let td = {};
     let tdClass = "";
@@ -278,11 +278,24 @@ const UI = (function() {
       }
     }
   }
-
+  function renderDestroyedShip(ship, playerName) {
+    const grid = canvas.querySelector(`[name="${playerName}"]`);
+    let glClasses = "";
+    let gridLocation = {};
+    ship.hullBlocks.forEach(block => {
+      gridLocation = grid.children[block.y].children[block.x].firstChild;
+      glClasses = gridLocation.getAttribute("class");
+      if (!gridLocation.classList.contains("destroyed")) {
+        glClasses += " destroyed";
+        gridLocation.setAttribute("class", glClasses);
+      }
+    });
+  }
   return {
     showFleet: showFleet,
     createBattlefield: createBattlefield,
-    updateBattlefield: updateBattlefield
+    updateBattlefield: updateBattlefield,
+    renderDestroyedShip: renderDestroyedShip
   };
 })();
 
@@ -486,17 +499,27 @@ const PlayerCtrl = (function() {
 
   let scored = false;
 
+  function checkIfShipIsDestroyed(player) {
+    player.command.fleet.forEach(ship => {
+      if (ship.health === 0) {
+        UI.renderDestroyedShip(ship, player.name);
+      }
+    });
+  }
   function playRound(x, y) {
     //Human turn
     playerHuman.setAttackPosition(x, y);
     if (!playerHuman.isAttackUniq()) return;
     scored = playerHuman.play((x, y) => playerPC.command.receiveAttack(x, y));
     UI.updateBattlefield(playerPC.command.battlefield, playerPC.name);
+    checkIfShipIsDestroyed(playerHuman);
+
     if (scored) return; // skip PC to play another turn
     //PC turn
     do {
       scored = playerPC.play((x, y) => playerHuman.command.receiveAttack(x, y));
       UI.updateBattlefield(playerHuman.command.battlefield, playerHuman.name);
+      checkIfShipIsDestroyed(playerPC);
     } while (scored);
   }
 
