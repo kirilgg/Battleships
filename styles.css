@@ -59,9 +59,11 @@ html {
   display: flex;
   flex-flow: column nowrap;
 }
-.grid {
+.table-fix {
   width: 50rem;
   height: 50rem;
+}
+.grid {
   border-spacing: 0px;
 }
 .grid-location {

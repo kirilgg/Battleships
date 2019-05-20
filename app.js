@@ -231,10 +231,13 @@ const UI = (function() {
   function createBattlefield(battlefield, playerName) {
     const ui = document.createElement("div");
     ui.setAttribute("class", "player");
-    ui.appendChild(createHorizontalInfo(battlefield.sizeX));
+    const tableFix = document.createElement("div");
+    tableFix.setAttribute("class", "table-fix");
 
+    ui.appendChild(createHorizontalInfo(battlefield.sizeX));
     ui.appendChild(createVerticalInfo(battlefield.sizeY));
-    ui.appendChild(createBattleGrid(battlefield, playerName));
+    tableFix.appendChild(createBattleGrid(battlefield, playerName));
+    ui.appendChild(tableFix);
     canvas.appendChild(ui);
   }
   function showFleet(fleet, playerName) {
