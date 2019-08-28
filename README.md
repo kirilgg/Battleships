@@ -2,6 +2,10 @@
 
 Minimalist vanila JS hobby project
 
+To Run: 
+- Download and extract
+- Open inxex.html in a browser (Tested only in Chrome 73)
+
 Game features 
 - Standart Battleship rules
 - Ships Are positioned at random locations 
